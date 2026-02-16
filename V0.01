@@ -1,0 +1,40 @@
+@echo off
+title XENOX'S LOGGER V0.01
+setlocal enabledelayedexpansion
+
+:start
+cls
+echo =========================================
+echo           XENOX'S IP LOGGER
+echo ========================================= V0.01
+echo.
+set /p target= Enter IP Address (or leave blank for yours): 
+
+echo.
+echo Fetching data for %target%...
+echo -----------------------------------------
+
+:: PowerShell bridge to fetch JSON and perform Reverse DNS
+powershell -Command ^
+    "$ip = '%target%'; " ^
+    "if ($ip -eq '') { $ip = (Invoke-RestMethod -Uri 'https://api.ipify.org') }; " ^
+    "$data = Invoke-RestMethod -Uri \"http://ip-api.com/json/$ip\"; " ^
+    "try { $hostName = [System.Net.Dns]::GetHostEntry($ip).HostName } catch { $hostName = 'No Hostname Found' }; " ^
+    "if ($data.status -eq 'success') { " ^
+    "    Write-Host 'Status:    ' -NoNewline; Write-Host 'SUCCESS' -ForegroundColor Green; " ^
+    "    Write-Host 'IP:        ' $data.query; " ^
+    "    Write-Host 'Hostname:  ' $hostName -ForegroundColor Cyan; " ^
+    "    Write-Host 'Country:   ' $data.country; " ^
+    "    Write-Host 'Region:    ' $data.regionName; " ^
+    "    Write-Host 'City:      ' $data.city; " ^
+    "    Write-Host 'ISP:       ' $data.isp; " ^
+    "    Write-Host 'Lat/Long:  ' ($data.lat.ToString() + ', ' + $data.lon.ToString()); " ^
+    "} else { " ^
+    "    Write-Host 'Error: Unable to find location data.' -ForegroundColor Red; " ^
+    "}"
+
+echo -----------------------------------------
+echo.
+echo Press any key to search again...
+pause >nul
+goto start
